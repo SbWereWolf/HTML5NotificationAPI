@@ -1,7 +1,7 @@
 <!--
   ~ HTML5NotificationAPI
   ~ Copyright © 2020 Volkhin Nikolay
-  ~ 21.04.2020, 16:46
+  ~ 21.04.2020, 17:13
   -->
 
 <!DOCTYPE html>
@@ -18,25 +18,19 @@
 			display: flex;
 			justify-content: space-around;
 			flex-direction: column;">
-		<div>
-			<p>
-				<a href='#' id="dnperm">Request Permission</a>
-			</p>
+		<p>
+			<a href='#' id="dnperm">Request Permission</a>
+		</p>
+		<div class="form-group">
+			<label for="addressee">Получатель:</label>
+			<input class="form-control" id="addressee" type="text"/>
+			<label for="message">Сообщение:</label>
+			<input class="form-control" id="message" type="text"/>
+			<input class="form-control" id="btnGetMessage"
+				   type="submit"
+				   value="Отправить"/>
 		</div>
-		<div>
-			<div class="form-group">
-				<label for="addressee">Получатель:</label>
-				<input class="form-control" id="addressee" type="text"/>
-				<label for="message">Сообщение:</label>
-				<input class="form-control" id="message" type="text"/>
-				<input class="form-control" id="btnGetMessage"
-					   type="submit"
-					   value="Отправить"/>
-			</div>
-		</div>
-		<div>
-			<ul id="comment"></ul>
-		</div>
+		<ul id="comment"></ul>
 	</div>
 </div>
 <script
@@ -47,17 +41,19 @@
 <script>
 	jQuery(function ($) {
 
-		var dnperm = document.getElementById('dnperm');
+		const dnperm = document.getElementById('dnperm');
 
 		dnperm.addEventListener('click', function (e) {
 			e.preventDefault();
 			if (!window.Notification) {
 				console.log('Not supported');
-			} else {
+			}
+			if (window.Notification) {
 				Notification.requestPermission().then(function (p) {
 					if (p === 'denied') {
 						console.log('You denied to show notification');
-					} else if (p === 'granted') {
+					}
+					if (p === 'granted') {
 						console.log('You allowed to show notification');
 					}
 				});
@@ -72,10 +68,10 @@
 		}
 
 		function renderUI(obj) {
-			var html = '';
+			let html = '';
 
-			var keys = Object.keys(obj);
-			for (var i = 0; i < keys.length; i++) {
+			const keys = Object.keys(obj);
+			for (let i = 0; i < keys.length; i++) {
 				html +=
 						"<li><b><i>"
 						+ obj[keys[i]].username
@@ -94,8 +90,7 @@
 			messageElement.val('');
 		});
 
-		// Initialize Firebase
-		var config = {
+		const config = {
 			apiKey: "AIzaSyAX3fjxYdQzZAaO8Qc48Cd_xIfx6-Io1aE",
 			authDomain: "iufirebaseresearch.firebaseapp.com",
 			databaseURL: "https://iufirebaseresearch.firebaseio.com",
@@ -107,7 +102,7 @@
 		};
 		firebase.initializeApp(config);
 
-		var database = firebase.database().ref().child("users");
+		const database = firebase.database().ref().child("users");
 
 		database.on('value', function (snapshot) {
 			const value = snapshot.val();
@@ -117,21 +112,16 @@
 		});
 
 		database.on('child_added', function (data) {
-			if (Notification.permission !== 'default') {
-				var notify;
-
-				notify = new Notification(data.val().username, {
-					'body': data.val().message,
-					'icon': 'images.jpeg',
-					'tag': data.getKey()
-				});
-
-				notify.onclick = function () {
-					console.log(this.tag);
-				}
-
-			} else {
+			if (Notification.permission === "default") {
 				console.log('Please allow the notification first');
+			}
+			if (Notification.permission !== "default") {
+				new Notification(
+						data.val().username,
+						{
+							'body': data.val().message,
+							'icon': 'images.jpeg',
+						});
 			}
 		});
 	});
