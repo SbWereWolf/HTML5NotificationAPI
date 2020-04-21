@@ -1,0 +1,118 @@
+<!--
+  ~ HTML5NotificationAPI
+  ~ Copyright © 2020 Volkhin Nikolay
+  ~ 21.04.2020, 18:54
+  -->
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <title>центр управления</title>
+    <meta charset="utf-8">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+<body style="margin: 100px auto;">
+<div style="
+		display: flex;
+		justify-content: space-around;">
+    <div style="
+			display: flex;
+			justify-content: space-around;
+			flex-direction: column;">
+
+        <h1 style="text-transform: uppercase;">центр управления</h1>
+        <div class="form-group">
+            <label for="addressee">Получатель:</label>
+            <input class="form-control" id="addressee" type="text"/>
+            <label for="message">Сообщение:</label>
+            <input class="form-control" id="message" type="text"/>
+            <input class="form-control" id="btnGetMessage"
+                   type="submit"
+                   value="Отправить"/>
+        </div>
+        <ol id="comment"></ol>
+    </div>
+</div>
+<script>
+    function send(database, name, message) {
+        database.push().set({
+            username: name,
+            message: message,
+            date: (new Date()).toString(),
+            timestamp: Date.now(),
+        });
+    }
+
+    function render(obj) {
+        let html = "";
+
+        const keys = Object.keys(obj);
+        for (let i = 0; i < keys.length; i++) {
+            html +=
+                "<li>"
+                + `${obj[keys[i]].username}: ${obj[keys[i]].message}`
+                + `, ${obj[keys[i]].date}`
+                + "</li>";
+        }
+        $("#comment").html(html);
+    }
+
+    function init() {
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAX3fjxYdQzZAaO8Qc48Cd_xIfx6-Io1aE",
+            authDomain: "iufirebaseresearch.firebaseapp.com",
+            databaseURL: "https://iufirebaseresearch.firebaseio.com",
+            projectId: "iufirebaseresearch",
+            storageBucket: "iufirebaseresearch.appspot.com",
+            messagingSenderId: "935028061781",
+            appId: "1:935028061781:web:cfe39e3e7b252bdc4bc6dc",
+            measurementId: "G-1NQFKDR6FB"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        const database = firebase.database().ref().child("users");
+        database.on("value", function (snapshot) {
+            const value = snapshot.val();
+            if (typeof value !== typeof undefined && value !== null) {
+                render(value);
+            }
+        });
+
+        $("#btnGetMessage").click(function () {
+            const nameElement = $("#addressee");
+            const messageElement = $("#message");
+            send(database, nameElement.val(), messageElement.val());
+            nameElement.val("");
+            messageElement.val("");
+        });
+    }
+
+    function onReady(fn) {
+        if (document.readyState === "complete"
+            || document.readyState === "interactive") {
+            setTimeout(fn, 100);
+        } else {
+            document.addEventListener("DOMContentLoaded", fn);
+        }
+    }
+
+    onReady(init);
+
+</script>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-app.js">
+</script>
+
+<!-- Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+<script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-analytics.js">
+</script>
+<script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-auth.js">
+</script>
+<script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-database.js">
+</script>
+</body>
+</html>
