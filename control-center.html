@@ -1,7 +1,7 @@
 <!--
   ~ HTML5NotificationAPI
   ~ Copyright © 2020 Volkhin Nikolay
-  ~ 21.04.2020, 18:54
+  ~ 22.04.2020, 0:39
   -->
 
 <!DOCTYPE html>
@@ -31,31 +31,35 @@
                    type="submit"
                    value="Отправить"/>
         </div>
-        <ol id="comment"></ol>
+        <ol id="wall"></ol>
     </div>
 </div>
 <script>
     function send(database, name, message) {
-        database.push().set({
+        database.add({
             username: name,
             message: message,
             date: (new Date()).toString(),
             timestamp: Date.now(),
-        });
+        })
+            .then(function (docRef) {
+                console.log("Message ID: ", docRef.id);
+            })
+            .catch(function (error) {
+                console.error("Error sending message: ", error);
+            });
     }
 
-    function render(obj) {
-        let html = "";
+    function render(message) {
+        const wall = $("#wall");
+        let html = wall.html();
+        html +=
+            "<li>"
+            + `<b>${message.username}: ${message.message}</b>`
+            + `, ${message.date}`
+            + "</li>";
 
-        const keys = Object.keys(obj);
-        for (let i = 0; i < keys.length; i++) {
-            html +=
-                "<li>"
-                + `${obj[keys[i]].username}: ${obj[keys[i]].message}`
-                + `, ${obj[keys[i]].date}`
-                + "</li>";
-        }
-        $("#comment").html(html);
+        wall.html(html);
     }
 
     function init() {
@@ -71,19 +75,32 @@
             measurementId: "G-1NQFKDR6FB"
         };
         firebase.initializeApp(firebaseConfig);
+        const messages = firebase.firestore().collection("messages");
 
-        const database = firebase.database().ref().child("users");
-        database.on("value", function (snapshot) {
-            const value = snapshot.val();
-            if (typeof value !== typeof undefined && value !== null) {
-                render(value);
-            }
-        });
+        messages.orderBy("timestamp").get()
+            .then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    render(doc.data());
+                });
+            })
+            .catch(function (error) {
+                console.error("Error getting messages: ", error);
+            });
+
+        messages.where("timestamp", ">", Date.now())
+            .onSnapshot(function (snapshot) {
+                snapshot.docChanges().forEach(function (change) {
+                    const message = change.doc.data();
+                    render(message);
+                });
+            }, function (error) {
+                console.error("Error : ", error);
+            });
 
         $("#btnGetMessage").click(function () {
             const nameElement = $("#addressee");
             const messageElement = $("#message");
-            send(database, nameElement.val(), messageElement.val());
+            send(messages, nameElement.val(), messageElement.val());
             nameElement.val("");
             messageElement.val("");
         });
@@ -99,7 +116,6 @@
     }
 
     onReady(init);
-
 </script>
 <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 <!-- The core Firebase JS SDK is always required and must be listed first -->
@@ -108,11 +124,9 @@
 
 <!-- Add SDKs for Firebase products that you want to use
      https://firebase.google.com/docs/web/setup#available-libraries -->
-<script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-analytics.js">
-</script>
 <script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-auth.js">
 </script>
-<script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-database.js">
+<script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-firestore.js">
 </script>
 </body>
 </html>

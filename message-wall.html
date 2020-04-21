@@ -1,0 +1,141 @@
+<!--
+  ~ HTML5NotificationAPI
+  ~ Copyright © 2020 Volkhin Nikolay
+  ~ 22.04.2020, 0:39
+  -->
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <title>стена сообщений</title>
+    <meta charset="utf-8">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+<body style="margin: 100px auto;">
+<div style="
+		display: flex;
+		justify-content: space-around;">
+    <div style="
+			display: flex;
+			justify-content: space-around;
+			flex-direction: column;">
+        <p>
+            <a href='#' id="dnperm">Request Permission</a>
+        </p>
+        <h1 style="text-transform: uppercase;">стена сообщений</h1>
+        <ol id="wall"></ol>
+    </div>
+</div>
+<script>
+    function onReady(fn) {
+        if (document.readyState === "complete"
+            || document.readyState === "interactive") {
+            setTimeout(fn, 100);
+        } else {
+            document.addEventListener("DOMContentLoaded", fn);
+        }
+    }
+
+    function render(obj) {
+        const wall = $("#wall");
+        let html = wall.html();
+        html +=
+            "<li>"
+            + `<b>${obj.username}: ${obj.message}</b>`
+            + `, ${obj.date}`
+            + "</li>";
+
+        wall.html(html);
+    }
+
+    function notify(message) {
+        const disable = !window.Notification;
+        if (disable || Notification.permission !== "granted") {
+            console.log("Please allow the notification first");
+        }
+        if (!disable && Notification.permission === "granted") {
+            if (typeof message !== typeof undefined && message !== null) {
+                new Notification(
+                    message.username,
+                    {
+                        "body": message.message,
+                        "icon": "images.jpeg",
+                    });
+                render(message);
+            }
+        }
+    }
+
+    function init() {
+        const config = {
+            apiKey: "AIzaSyAX3fjxYdQzZAaO8Qc48Cd_xIfx6-Io1aE",
+            authDomain: "iufirebaseresearch.firebaseapp.com",
+            databaseURL: "https://iufirebaseresearch.firebaseio.com",
+            projectId: "iufirebaseresearch",
+            storageBucket: "iufirebaseresearch.appspot.com",
+            messagingSenderId: "935028061781",
+            appId: "1:935028061781:web:cfe39e3e7b252bdc4bc6dc",
+            measurementId: "G-1NQFKDR6FB"
+        };
+        firebase.initializeApp(config);
+
+        const messages = firebase.firestore().collection("messages");
+        messages.where("timestamp", ">", Date.now())
+            .onSnapshot(function (snapshot) {
+                snapshot.docChanges().forEach(function (change) {
+                    if (change.type === "added") {
+                        notify(change.doc.data());
+                    }
+                });
+            }, function (error) {
+                console.error("Error : ", error);
+            });
+
+        const disable = !window.Notification;
+        if (disable) {
+            console.log("Notification not supported");
+        }
+        if (!disable && Notification.permission === "default") {
+            Notification.requestPermission()
+                .then(function (p) {
+                    if (p === "denied") {
+                        console.log("You denied to show notification");
+                    }
+                    if (p === "granted") {
+                        console.log("You allowed to show notification");
+                    }
+                });
+        }
+
+        const dnperm = document.getElementById("dnperm");
+        dnperm.addEventListener("click", function (e) {
+            e.preventDefault();
+            if (!disable) {
+                Notification.requestPermission()
+                    .then(function (p) {
+                        if (p === "denied") {
+                            console.log("You denied to show notification");
+                        }
+                        if (p === "granted") {
+                            console.log("You allowed to show notification");
+                        }
+                    });
+            }
+        });
+    }
+
+    onReady(init);
+</script>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-app.js">
+</script>
+
+<!-- Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+<script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-auth.js">
+</script>
+<script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-firestore.js">
+</script>
+</body>
+</html>
